@@ -9,6 +9,7 @@ package com.amastigote.unstamper.core;
 
 import com.amastigote.unstamper.log.GeneralLogger;
 import com.sun.istack.internal.NotNull;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.contentstream.operator.Operator;
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSName;
@@ -54,7 +55,7 @@ public class Processor {
                 return;
             }
 
-            PDDocument pdDocument = PDDocument.load(file);
+            PDDocument pdDocument = Loader.loadPDF(file);
 
             pdDocument.getPages().forEach(pdPage -> {
                 try {
@@ -62,7 +63,7 @@ public class Processor {
 
                     /* >> loading font resources from current page */
                     PDFStreamParser pdfStreamParser = new PDFStreamParser(pdPage);
-                    pdfStreamParser.parse();
+                    List<Object> tokens = pdfStreamParser.parse();
 
                     Set<PDFont> pdFonts = new HashSet<>();
 
@@ -105,7 +106,7 @@ public class Processor {
                     boolean mcRemovingFlag = false;
 
                     /* handle both string array and string */
-                    List<Object> objects = pdfStreamParser.getTokens();
+                    List<Object> objects = tokens;
                     Object object, prevObject;
                     for (int i = 0; i < objects.size(); i++) {
                         object = objects.get(i);
@@ -117,8 +118,10 @@ public class Processor {
                                 ++mcCount;
                                 mcRemovingFlag = markedContentMatchRecords.get(mcCount);
                             } else if (END_MARKED_CONTENT.equals(op.getName())) {
+                                if (mcRemovingFlag) {
+                                    objects.set(i, empObj);
+                                }
                                 mcRemovingFlag = false;
-                                objects.set(i, empObj);
                             }
                         }
 
@@ -131,6 +134,7 @@ public class Processor {
                         if (object instanceof Operator) {
                             Operator op = (Operator) object;
                             String testStr;
+                            byte[] testBytes;
                             boolean isArray = false;
 
                             if (SHOW_TEXT.equals(op.getName()) || (SHOW_TEXT_ADJUSTED.equals(op.getName()))) {
@@ -151,14 +155,15 @@ public class Processor {
                                         builder.append(array.getString(j));
                                     }
                                     testStr = builder.toString();
+                                    testBytes=testStr.getBytes();
                                 } else if (prevObject instanceof COSString) {
-                                    testStr = ((COSString) prevObject).toString();
+                                    testBytes = ((COSString) prevObject).getBytes();
                                 } else {
                                     continue;
                                 }
 
                                 try {
-                                    if (TextStampRecognizer.recognize(strings, testStr.getBytes(), pdFonts, useStrict)) {
+                                    if (TextStampRecognizer.recognize(strings, testBytes, pdFonts, useStrict)) {
                                         if (isArray) {
                                             ((COSArray) prevObject).clear();
                                         } else {

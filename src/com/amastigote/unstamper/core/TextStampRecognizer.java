@@ -30,8 +30,11 @@ class TextStampRecognizer {
             }
 
             /* do not encode unsupported font */
-            if ((f instanceof PDType0Font && ((PDType0Font) f).getDescendantFont() instanceof PDCIDFontType0)
-                    || f instanceof PDType3Font) {
+//            if ((f instanceof PDType0Font && ((PDType0Font) f).getDescendantFont() instanceof PDCIDFontType0)
+//                    || f instanceof PDType3Font) {
+//                continue;
+//            }
+            if (f instanceof PDType3Font) {
                 continue;
             }
 
@@ -51,9 +54,9 @@ class TextStampRecognizer {
     }
 
     static boolean recognizePlain(
-            @NotNull String[] keywords,
-            @NotNull byte[] inputText,
-            @NotNull boolean useStrict
+             String[] keywords,
+             byte[] inputText,
+             boolean useStrict
     ) {
         for (String k : keywords) {
             if (checkDuplicate(new String(inputText), k, useStrict)) {

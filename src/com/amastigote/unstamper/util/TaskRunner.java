@@ -15,6 +15,7 @@ import com.sun.istack.internal.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -92,5 +93,10 @@ public class TaskRunner {
             return;
         }
         fileIterator.forEachRemaining(TaskRunner::submitToProcessor);
+    }
+
+    public static void main(String[] args) {
+        TaskRunner.init(new String[]{"helloworld"}, false, false);
+        TaskRunner.procSingleFile("C:\\Users\\Administrator\\Desktop\\test\\TN65CLDR001_2_6_2.pdf", "C:\\Users\\Administrator\\Desktop\\test\\pdftest.remove.pdf");
     }
 }
